@@ -1,7 +1,7 @@
 /*
  * @Description:
  * @Date: 2022-08-03 15:07:45
- * @LastEditTime: 2022-08-05 18:20:31
+ * @LastEditTime: 2022-08-06 14:08:37
  * @FilePath: \vue2-review\src\router\index.js
  */
 import Vue from "vue";
@@ -13,8 +13,9 @@ const Home =  () => import("@/views/Home/index.vue")
 Vue.use(VueRouter);
 
 const routes = [
+  {path:'/',redirect:'/home'},
   {
-    path: "/",
+    path: "/home",
     name:'Home',
     component: Home
   },
