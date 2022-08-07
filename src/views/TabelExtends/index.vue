@@ -1,7 +1,7 @@
 <!--
  * @Description: 
  * @Date: 2022-08-04 16:11:29
- * @LastEditTime: 2022-08-06 23:01:38
+ * @LastEditTime: 2022-08-07 21:39:27
  * @FilePath: \vue2-review\src\views\TabelExtends\index.vue
 -->
 <template>
@@ -26,17 +26,22 @@
     <div class="cell">
       
     </div>
+    <SpanRender :title="1"></SpanRender>
   </div>
 </template>
 
 <script>
 import extendComponents from './TreeData/data.js'
+import SpanRender from './TreeData/span.vue'
 export default {
   name: "TabelExtends",
   data() {
     return {
       tableData:null
     };
+  },
+  components:{
+    SpanRender
   },
   mounted(){
     this.$axiosHttp.get({url:'/user'}).then((v)=>{
@@ -48,11 +53,13 @@ export default {
     dblclick(row, column, cell, event){
       console.log(`row:${row}, column:${column}, cell:${cell}, event:${event}`);
 
-    new extendComponents.inpurtC({
+    new extendComponents.spanC(
+      {
       propsData:{
         title:'123'
       }
-    }).$mount('.cell')
+    }
+    ).$mount('.cell')
     },
   },
 }
