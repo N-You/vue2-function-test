@@ -1,15 +1,15 @@
 <!--
  * @Description: 
  * @Date: 2022-08-06 22:30:39
- * @LastEditTime: 2022-08-07 22:21:39
+ * @LastEditTime: 2022-08-09 16:59:03
  * @FilePath: \vue2-review\src\views\TabelExtends\TreeData\span.vue
 -->
 <script>
 export default {
   props: {
-    title: {
-      type: Number,
-      default: 6,
+    cellValue: {
+      type: [Number,String],
+      default: '',
     },
   },
   // return 不能返回箭头函数，会报 this 问题
@@ -17,7 +17,7 @@ export default {
     return h('span', {
       class: "cell",
       domProps: {
-        innerText: `${this.title}`,
+        innerText: `${this.cellValue}`,
       },
     });
   },
