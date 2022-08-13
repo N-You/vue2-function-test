@@ -1,7 +1,7 @@
 <!--
  * @Description: 
  * @Date: 2022-08-04 22:47:05
- * @LastEditTime: 2022-08-05 23:10:34
+ * @LastEditTime: 2022-08-13 16:45:52
  * @FilePath: \vue2-review\src\views\Home\index.vue
 -->
 <template>
@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import ComponentOne from "@/components/componentIs/component-one.vue";
+import ComponentOne from "@/components/componentIs/canvas.vue";
 import componentTwo from "@/components/componentIs/component-tow.vue";
 import slotTest from "@/components/slotTest/current-user.vue";
 export default {

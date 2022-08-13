@@ -1,145 +1,136 @@
-//对Fetch的封装：让其支持params/请求主体的格式化/请求地址的公共前缀 
+import { Cfetch, interceptors } from "./fetchInterceptors";
+// 这里是我项目使用到的js-cookie库，主要是为了拿到token，你们这里改成你们获取token的方式即可
+import Cookies from "js-cookie";
 
-/* const env = process.env.NODE_ENV || 'development',
-    baseURL = '';
-switch (env) {
-    case 'development':
-        baseURL = 'http://127.0.0.1:9999';
-        break;
-    case 'test':
-        baseURL = 'http://168.1.123.1:9999';
-        break;
-    case 'production':
-        baseURL = 'http://api.zhufengpeixun.cn';
-        break;
-} */
-
-// 公用前缀 & 默认配置
-let baseURL = 'http://127.0.0.1:9999'
-let inital = {
-        method: 'GET',
-        params: null,
-        body: null,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        credentials: true,
-        responseType: 'JSON',
-        cache: 'no-cache'
-    };
-
-// 校验是否为纯粹的对象
-const isPlainObject = function isPlainObject(obj) {
-    let proto, Ctor;
-    if (!obj || typeof obj !== "object") return false;
-    proto = Object.getPrototypeOf(obj);
-    if (!proto) return true;
-    Ctor = proto.hasOwnProperty('constructor') && proto.constructor;
-    return typeof Ctor === "function" && Ctor === Object;//构造函数是Object
+/**
+ * config 自定义配置项
+ * @param withoutCheck 不使用默认的接口状态校验，直接返回 response
+ * @param returnOrigin 是否返回整个 response 对象，为 false 只返回 response.data
+ * @param showError 全局错误时，是否使用统一的报错方式
+ * @param canEmpty 传输参数是否可以为空
+ * @param mock 是否使用 mock 服务
+ * @param timeout 接口请求超时时间，默认10秒
+ */
+let configDefault = {
+  showError: true,
+  canEmpty: false,
+  returnOrigin: false,
+  withoutCheck: false,
+  mock: false,
+  timeout: 10000,
 };
 
-// 发送数据请求
-const request = function(url, config) {
-    // 合并配置项{不要去更改inital中的内容}
-    (config == null || typeof config !== "object") ? config = {}: null;//确保config肯定是对象
-    if (config.headers && isPlainObject(config.headers)) {
-        // 单独的给HEADERS先进行深度合并
-        config.headers = Object.assign({}, inital.headers, config.headers);
+// 添加请求拦截器
+interceptors.request.use((config) => {
+  // 这里是我项目使用到的js-cookie库，主要是为了拿到token，你们这里改成你们获取token的方式即可
+  const token = Cookies.get("access_token");
+  let configTemp = Object.assign(
+    {
+      responseType: "json",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+        authorization: `Bearer ${token}`,
+      },
+    },
+    configDefault,
+    config
+  );
+  console.log("添加请求拦截器 configTemp ==>", configTemp);
+  return configTemp;
+});
+
+// 添加响应拦截器
+interceptors.response.use(async (response) => {
+  console.log("拦截器response ==>", response);
+  console.log("configDefault", configDefault);
+
+  // TODO: 这里是复制一份结果处理，在这里可以做一些操作
+  const res = await resultReduction(response.clone());
+
+  // HTTP 状态码 2xx 状态入口，data.code 为 200 表示数据正确，无任何错误
+  if (response.status >= 200 && response.status < 300) {
+    return response;
+  } else {
+    // 非 2xx 状态入口
+    if (configDefault.withoutCheck) {
+      // 不进行状态状态检测
+      return Promise.reject(response);
     }
-    let {
-        method,
-        params,
-        body,
-        headers,
-        credentials,
-        responseType,
-        cache
-    } = Object.assign({}, inital, config);//合并config
+    return Promise.reject(response);
+  }
+});
 
-    // 处理URL{格式校验 & 公共前缀 & 拼接params中的信息到URL的末尾}
-    if (typeof url !== "string") throw new TypeError( ` ${url} is not an string! ` );
-    if (!/^http(s?):///i.test(url)) url = baseURL + url;//判断是不是以http或者https开头,如果不是,就用baseurl拼起来
-    if (params != null) {//不是null和undefined,存在params
-        if (isPlainObject(params)) {
-            params = Qs.stringify(params);
-        }
-        url +=  ` ${url.includes('?')?'&':'?'}${params} ` ;//拼接
+// 结果处理，fetch请求响应结果是promise，还得处理
+async function resultReduction(response) {
+  let res = "";
+  switch (configDefault.responseType) {
+    case "json":
+      res = await response.json();
+      break;
+    case "text":
+      res = await response.text();
+      break;
+    case "blod":
+      res = await response.blod();
+      break;
+    default:
+      res = await response.json();
+      break;
+  }
+  console.log("结果处理", res);
+  return res;
+}
+
+function request(method, path, data, config) {
+  let myInit = {
+    method,
+    ...configDefault,
+    ...config,
+    body: JSON.stringify(data),
+  };
+  if (method === "GET") {
+    let params = "";
+    if (data) {
+      // 对象转url参数
+      params = JSON.stringify(data)
+        .replace(/:/g, "=")
+        .replace(/"/g, "")
+        .replace(/,/g, "&")
+        .match(/\{([^)]*)\}/)[1];
     }
-
-    // 处理请求主体的数据格式{根据headers中的Content-Type处理成为指定的格式}
-    if (body != null) {
-        if (isPlainObject(body)) {
-            let contentType = headers['Content-Type'] || 'application/json';//默认application/json
-            if (contentType.includes('urlencoded')) body = Qs.stringify(body);
-            if (contentType.includes('json')) body = JSON.stringify(body);
-        }
-    }
-
-    // 处理credentials{如果传递的是true,我们让其为include,否则是same-origin}
-    //include,允许跨域请求当中携带资源凭证,same-origin,允许同源性请求当中携带资源凭证
-    credentials = credentials ? 'include' : 'same-origin';
-
-    // 基于fetch请求数据
-    method = method.toUpperCase();
-    responseType = responseType.toUpperCase();
-    config = {
-        method,
-        credentials,
-        cache,
-        headers
-    };
-    /^(POST|PUT|PATCH)$/i.test(method) ? config.body = body : null;
-    return fetch(url, config).then(function onfulfilled(response) {
-        // 走到这边不一定是成功的：
-        // Fetch的特点的是，只要服务器有返回结果，不论状态码是多少，它都认为是成功
-        let {
-            status,
-            statusText
-        } = response;
-        if (status >= 200 && status < 400) {
-            // 真正成功获取数据
-            let result;
-            switch (responseType) {
-                case 'TEXT':
-                    result = response.text();
-                    break;
-                case 'JSON':
-                    result = response.json();
-                    break;
-                case 'BLOB':
-                    result = response.blob();
-                    break;
-                case 'ARRAYBUFFER':
-                    result = response.arrayBuffer();
-                    break;
-            }
-            return result;
-        }
-        // 应该是失败的处理
-        return Promise.reject({
-            code: 'STATUS ERROR',
-            status,
-            statusText
-        });
-    }).catch(function onrejected(reason) {
-        // @1:状态码失败
-        if (reason && reason.code === "STATUS ERROR") {
-            switch (reason.status) {
-                case 401:
-                    break;
-                    // ...
-            }
-        }
-
-        // @2:断网
-        if (!navigator.onLine) {
-            // ...
-        }
-
-        // @3:处理返回数据格式失败
-        // ...
-
-        return Promise.reject(reason);
+    return Cfetch(`${path}?${params}`, {
+      ...configDefault,
+      ...config,
     });
+  }
+
+  return Cfetch(path, myInit);
+}
+
+// get请求方法使用封装
+function get(path, data, config) {
+  return request("GET", path, data, config);
+}
+
+// post请求方法使用封装
+function post(path, data, config) {
+  return request("POST", path, data, config);
+}
+
+// put请求方法使用封装
+function put(path, data, config) {
+  return request("PUT", path, data, config);
+}
+
+// delete请求方法使用封装
+function del(path, data, config) {
+  return request("DELETE", path, data, config);
+}
+
+export default {
+  fetch: Cfetch,
+  get,
+  post,
+  put,
+  delete: del,
 };
-export default request;
