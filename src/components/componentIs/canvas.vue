@@ -1,7 +1,7 @@
 <!--
  * @Description: 
  * @Date: 2022-08-04 16:11:29
- * @LastEditTime: 2022-08-13 16:52:39
+ * @LastEditTime: 2022-08-13 17:43:22
  * @FilePath: \vue2-review\src\components\componentIs\canvas.vue
 -->
 <template>
@@ -28,5 +28,5 @@ export default{
   }
 }
 </script>
-
+   
 <style></style>

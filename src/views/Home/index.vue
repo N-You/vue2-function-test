@@ -13,12 +13,15 @@
     <p>v-slot测试</p>
     <slotTest>
       <template v-slot:header="slotProps">
-        <h1>Here might be a page title || {{slotProps.user.firstName}}</h1>
+        <h1>Here might be a page title || {{ slotProps.user.firstName }}</h1>
       </template>
       <template v-slot="slotProps2">
-      123{{slotProps2.user2.firstName}}
+        123{{ slotProps2.user2.firstName }}
       </template>
     </slotTest>
+
+    <p>模态窗口测试</p>
+    <button @click="showConfirm">开关</button>
   </div>
 </template>
 
@@ -26,11 +29,13 @@
 import ComponentOne from "@/components/componentIs/canvas.vue";
 import componentTwo from "@/components/componentIs/component-tow.vue";
 import slotTest from "@/components/slotTest/current-user.vue";
+import Confirm from "@/plugins/confirm/confirm.vue";
 export default {
   name: "Home",
   data() {
     return {
       cName: "ComponentOne",
+      visible: false,
     };
   },
   methods: {
@@ -38,11 +43,17 @@ export default {
       this.cName =
         this.cName === "ComponentOne" ? "componentTwo" : "ComponentOne";
     },
+    showConfirm() {
+      this.$confirm({
+        title: "just go go",
+      })
+    },
   },
   components: {
     ComponentOne,
     componentTwo,
     slotTest,
+    Confirm,
   },
 };
 </script>

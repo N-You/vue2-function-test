@@ -12,6 +12,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import axiosHttp from './network/axiosRequest'
 import Message from './utils/Message';
 import App from './App.vue'
+import Confirm from "./plugins/confirm/index.js";
 
 if (process.env.NODE_ENV === 'development') {
   const { worker } = require('./mocks/browser')
@@ -22,6 +23,7 @@ Vue.use(ElementUI)
 Vue.use(store)
 Vue.use(axiosHttp)
 Vue.use(Message)
+Vue.use(Confirm)
 
 Vue.config.productionTip = false
 

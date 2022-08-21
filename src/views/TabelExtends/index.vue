@@ -65,6 +65,10 @@ export default {
       }).$mount(cell.children[0]);
     },
 
+    handleClick(value){
+    console.log("🚀 ~ file: index.vue ~ line 69 ~ handleClick ~ value", value)
+    },
+
     transferParams(params) {
       console.log(
         "🚀 ~ file: index.vue ~ line 67 ~ transferParams ~ params",
